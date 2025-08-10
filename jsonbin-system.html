@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미화 품목 제출 시스템 (JSONBin 연동)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>미화 품목 제출 시스템</h1>
+            <p>모든 기기에서 실시간 공유</p>
+            <div style="text-align: center; margin-top: 10px;">
+                <span id="connectionStatus" style="padding: 5px 10px; border-radius: 15px; font-size: 14px; background: #4CAF50; color: white;">🟢 온라인 연결됨</span>
+            </div>
+        </header>
+
+        <!-- 메뉴 버튼들 -->
+        <div class="menu-buttons" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" onclick="showFormPage()">새 신청</button>
+            <button type="button" class="btn btn-secondary" onclick="showListPage()">전체 현황</button>
+            <button type="button" class="btn btn-secondary" onclick="showMyPage()">내 신청</button>
+            <button type="button" class="btn btn-secondary" onclick="showMonthlyPage()">월별 집계</button>
+        </div>
+
+        <!-- 신청 폼 (기존과 동일) -->
+        <div id="formPage">
+            <form id="itemForm">
+                <div class="form-group">
+                    <label for="name">신청자 이름:</label>
+                    <input type="text" id="name" name="name" required placeholder="이름을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="department">부서/팀:</label>
+                    <input type="text" id="department" name="department" required placeholder="부서명을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="date">신청 날짜:</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                
+                <div class="items-section">
+                    <h3>필요한 품목</h3>
+                    <div class="item-row">
+                        <label for="envelope">봉투:</label>
+                        <input type="number" id="envelope" name="envelope" min="0" value="0" class="quantity-input">
+                        <span class="unit">개</span>
+                    </div>
+                    <div class="item-row">
+                        <label for="rag">걸레:</label>
+                        <input type="number" id="rag" name="rag" min="0" value="0" class="quantity-input">
+                        <span class="unit">개</span>
+                    </div>
+                    <div class="item-row">
+                        <label for="bleach">락스:</label>
+                        <input type="number" id="bleach" name="bleach" min="0" value="0" class="quantity-input">
+                        <span class="unit">병</span>
+                    </div>
+                    <div class="item-row">
+                        <label for="detergent">세제:</label>
+                        <input type="number" id="detergent" name="detergent" min="0" value="0" class="quantity-input">
+                        <span class="unit">병</span>
+                    </div>
+                    <div class="item-row">
+                        <label for="tissue">휴지:</label>
+                        <input type="number" id="tissue" name="tissue" min="0" value="0" class="quantity-input">
+                        <span class="unit">롤</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="memo">비고:</label>
+                    <textarea id="memo" name="memo" placeholder="추가 요청사항" rows="3"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">제출하기</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">다시 작성</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 제출 완료 -->
+        <div id="successSection" class="success-section hidden">
+            <div class="success-message">
+                <h3>✅ 제출 완료!</h3>
+                <p id="successInfo"></p>
+                <p style="margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 8px;">
+                    🌍 <strong>모든 기기에서 확인 가능!</strong><br>
+                    다른 사람들도 지금 바로 볼 수 있습니다.
+                </p>
+            </div>
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" onclick="showListPage()">전체 현황 보기</button>
+                <button type="button" class="btn btn-secondary" onclick="showFormPage()">새로운 신청</button>
+            </div>
+        </div>
+
+        <!-- 전체 현황 페이지 -->
+        <div id="listPage" class="list-page hidden">
+            <h2>📊 전체 신청 현황</h2>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button onclick="loadFromCloud()" class="btn btn-secondary" style="background: #2196F3; color: white;">🔄 최신 데이터 가져오기</button>
+            </div>
+            
+            <div class="list-content">
+                <div id="listContainer"></div>
+            </div>
+
+            <div class="summary-section">
+                <h3>이번 달 총 수량</h3>
+                <div id="currentMonthSummary"></div>
+            </div>
+        </div>
+
+        <!-- 내 신청 페이지 -->
+        <div id="myPage" class="list-page hidden">
+            <h2>📝 내 신청 내역</h2>
+            <div class="form-group">
+                <input type="text" id="myName" placeholder="이름을 입력하세요" class="search-input">
+                <button type="button" class="btn btn-secondary" onclick="searchMySubmissions()">검색</button>
+            </div>
+            <div id="myListContainer"></div>
+        </div>
+
+        <!-- 월별 집계 페이지 -->
+        <div id="monthlyPage" class="list-page hidden">
+            <h2>📅 월별 집계</h2>
+            <div class="form-group">
+                <select id="monthSelect" onchange="loadMonthlyData()" style="padding: 12px; font-size: 16px;">
+                    <option value="">월을 선택하세요</option>
+                </select>
+            </div>
+            <div id="monthlyStats" class="hidden">
+                <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 id="selectedMonth"></h3>
+                    <p><strong>총 신청자:</strong> <span id="monthlyPeople">0</span>명</p>
+                    <p><strong>총 신청 건수:</strong> <span id="monthlyCount">0</span>건</p>
+                </div>
+                <div class="summary-section">
+                    <h3>월별 품목 총 수량</h3>
+                    <div id="monthlySummary"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JSONBin 설정 (무료 계정으로 사용 가능)
+        const JSONBIN_CONFIG = {
+            binId: 'YOUR_BIN_ID', // JSONBin에서 생성한 BIN ID
+            apiKey: 'YOUR_API_KEY', // JSONBin API 키
+            baseUrl: 'https://api.jsonbin.io/v3'
+        };
+
+        // 품목 정보
+        const ITEM_INFO = {
+            envelope: '봉투',
+            rag: '걸레',
+            bleach: '락스',
+            detergent: '세제',
+            tissue: '휴지'
+        };
+
+        const ITEM_UNITS = {
+            envelope: '개',
+            rag: '개',
+            bleach: '병',
+            detergent: '병',
+            tissue: '롤'
+        };
+
+        const ITEM_KEYS = Object.keys(ITEM_INFO);
+        let allSubmissions = [];
+
+        // 페이지 로드시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+            
+            document.getElementById('itemForm').addEventListener('submit', handleFormSubmit);
+            
+            // 클라우드에서 데이터 로드
+            loadFromCloud();
+            
+            showFormPage();
+        });
+
+        // 클라우드에서 데이터 로드
+        async function loadFromCloud() {
+            try {
+                updateConnectionStatus('loading', '🔄 데이터 로딩 중...');
+                
+                // JSONBin에서 데이터 가져오기
+                const response = await fetch(`${JSONBIN_CONFIG.baseUrl}/b/${JSONBIN_CONFIG.binId}/latest`, {
+                    headers: {
+                        'X-Master-Key': JSONBIN_CONFIG.apiKey
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    allSubmissions = data.record.submissions || [];
+                    
+                    // localStorage에도 백업 저장
+                    localStorage.setItem('cleaningSubmissions', JSON.stringify(allSubmissions));
+                    
+                    updateConnectionStatus('online', '🟢 온라인 연결됨');
+                    
+                    // 현재 페이지가 목록이면 새로고침
+                    if (!document.getElementById('listPage').classList.contains('hidden')) {
+                        loadSubmissions();
+                    }
+                    
+                    console.log(`클라우드에서 ${allSubmissions.length}개 데이터 로드 완료`);
+                } else {
+                    throw new Error('데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('클라우드 로드 실패:', error);
+                
+                // 실패시 localStorage에서 로드
+                allSubmissions = JSON.parse(localStorage.getItem('cleaningSubmissions') || '[]');
+                updateConnectionStatus('offline', '🔴 오프라인 모드');
+            }
+        }
+
+        // 클라우드에 데이터 저장
+        async function saveToCloud(newSubmission) {
+            try {
+                updateConnectionStatus('saving', '💾 저장 중...');
+                
+                // 새 데이터 추가
+                allSubmissions.unshift(newSubmission);
+                
+                // JSONBin에 저장
+                const response = await fetch(`${JSONBIN_CONFIG.baseUrl}/b/${JSONBIN_CONFIG.binId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_CONFIG.apiKey
+                    },
+                    body: JSON.stringify({
+                        submissions: allSubmissions,
+                        lastUpdated: new Date().toISOString()
+                    })
+                });
+
+                if (response.ok) {
+                    updateConnectionStatus('online', '🟢 온라인 연결됨');
+                    
+                    // localStorage에도 백업
+                    localStorage.setItem('cleaningSubmissions', JSON.stringify(allSubmissions));
+                    
+                    console.log('클라우드 저장 성공');
+                    return true;
+                } else {
+                    throw new Error('저장 실패');
+                }
+            } catch (error) {
+                console.error('클라우드 저장 실패:', error);
+                
+                // 실패시 localStorage에만 저장
+                localStorage.setItem('cleaningSubmissions', JSON.stringify(allSubmissions));
+                updateConnectionStatus('offline', '🔴 오프라인 저장됨');
+                
+                return false;
+            }
+        }
+
+        // 연결 상태 업데이트
+        function updateConnectionStatus(status, text) {
+            const statusElement = document.getElementById('connectionStatus');
+            statusElement.textContent = text;
+            
+            statusElement.className = '';
+            statusElement.style.padding = '5px 10px';
+            statusElement.style.borderRadius = '15px';
+            statusElement.style.fontSize = '14px';
+            
+            switch(status) {
+                case 'online':
+                    statusElement.style.background = '#4CAF50';
+                    statusElement.style.color = 'white';
+                    break;
+                case 'offline':
+                    statusElement.style.background = '#f44336';
+                    statusElement.style.color = 'white';
+                    break;
+                case 'loading':
+                case 'saving':
+                    statusElement.style.background = '#ff9800';
+                    statusElement.style.color = 'white';
+                    break;
+            }
+        }
+
+        // 폼 제출 처리
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            
+            // 검증
+            if (!data.name.trim() || !data.department.trim()) {
+                alert('이름과 부서를 입력해주세요.');
+                return;
+            }
+            
+            const hasItems = ITEM_KEYS.some(item => parseInt(data[item]) > 0);
+            if (!hasItems) {
+                alert('최소 하나의 품목을 선택해주세요.');
+                return;
+            }
+            
+            // 새 제출 데이터 생성
+            const submission = {
+                ...data,
+                id: Date.now().toString(),
+                submittedAt: new Date().toISOString(),
+                month: new Date(data.date).toISOString().slice(0, 7)
+            };
+            
+            // 클라우드에 저장
+            const saveSuccess = await saveToCloud(submission);
+            
+            if (saveSuccess) {
+                showSuccess(data, '모든 기기에서 확인 가능합니다!');
+            } else {
+                showSuccess(data, '오프라인으로 저장되었습니다. 나중에 동기화됩니다.');
+            }
+            
+            resetForm();
+        }
+
+        // 성공 메시지 표시
+        function showSuccess(data, message) {
+            hideAllPages();
+            document.getElementById('successSection').classList.remove('hidden');
+            
+            const items = [];
+            ITEM_KEYS.forEach(key => {
+                if (parseInt(data[key]) > 0) {
+                    items.push(`${ITEM_INFO[key]} ${data[key]}${ITEM_UNITS[key]}`);
+                }
+            });
+            
+            document.getElementById('successInfo').innerHTML = `
+                <strong>신청자:</strong> ${data.name}<br>
+                <strong>부서:</strong> ${data.department}<br>
+                <strong>신청 품목:</strong> ${items.join(', ')}<br><br>
+                <em>${message}</em>
+            `;
+        }
+
+        // 전체 현황 페이지
+        function showListPage() {
+            hideAllPages();
+            document.getElementById('listPage').classList.remove('hidden');
+            loadSubmissions();
+        }
+
+        // 신청 목록 로드
+        function loadSubmissions() {
+            const container = document.getElementById('listContainer');
+            
+            if (allSubmissions.length === 0) {
+                container.innerHTML = '<p style="text-align: center; font-size: 18px; color: #666;">아직 신청된 내역이 없습니다.</p>';
+                updateCurrentMonthSummary([]);
+                return;
+            }
+            
+            let html = '';
+            allSubmissions.forEach((submission, index) => {
+                html += createSubmissionHTML(submission, index);
+            });
+            
+            container.innerHTML = html;
+            updateCurrentMonthSummary(allSubmissions);
+        }
+
+        // 신청 항목 HTML 생성
+        function createSubmissionHTML(submission, index) {
+            const items = [];
+            ITEM_KEYS.forEach(key => {
+                if (parseInt(submission[key]) > 0) {
+                    items.push(`${ITEM_INFO[key]} ${submission[key]}${ITEM_UNITS[key]}`);
+                }
+            });
+            
+            const submittedDate = new Date(submission.submittedAt);
+            
+            return `
+                <div class="submission-item">
+                    <div class="submission-header">
+                        <div class="submission-info">
+                            <span><strong>${submission.name}</strong> (${submission.department})</span>
+                            <span>신청일: ${formatDate(submission.date)}</span>
+                            <span>제출: ${submittedDate.toLocaleDateString('ko-KR')} ${submittedDate.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="submission-items">
+                        ${items.map(item => `<div class="item-display"><div class="item-name">${item}</div></div>`).join('')}
+                    </div>
+                    
+                    ${submission.memo ? `<div class="submission-memo"><p><strong>비고:</strong> ${submission.memo}</p></div>` : ''}
+                </div>
+            `;
+        }
+
+        // 이번 달 총 수량 업데이트
+        function updateCurrentMonthSummary(submissions) {
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            const currentMonthSubmissions = submissions.filter(s => s.month === currentMonth);
+            
+            const totals = {};
+            currentMonthSubmissions.forEach(submission => {
+                ITEM_KEYS.forEach(key => {
+                    const quantity = parseInt(submission[key]) || 0;
+                    if (quantity > 0) {
+                        totals[key] = (totals[key] || 0) + quantity;
+                    }
+                });
+            });
+            
+            let summaryHtml = '<div class="total-summary-grid">';
+            ITEM_KEYS.forEach(key => {
+                if (totals[key] > 0) {
+                    summaryHtml += `
+                        <div class="total-item">
+                            <div class="item-name">${ITEM_INFO[key]}</div>
+                            <div class="item-total">${totals[key]}${ITEM_UNITS[key]}</div>
+                        </div>
+                    `;
+                }
+            });
+            summaryHtml += '</div>';
+            
+            document.getElementById('currentMonthSummary').innerHTML = summaryHtml || 
+                '<p style="text-align: center; color: #666;">이번 달 신청된 품목이 없습니다.</p>';
+        }
+
+        // 내 신청 페이지
+        function showMyPage() {
+            hideAllPages();
+            document.getElementById('myPage').classList.remove('hidden');
+        }
+
+        // 내 신청 검색
+        function searchMySubmissions() {
+            const name = document.getElementById('myName').value.trim();
+            if (!name) {
+                alert('이름을 입력해주세요.');
+                return;
+            }
+            
+            const mySubmissions = allSubmissions.filter(s => s.name.includes(name));
+            const container = document.getElementById('myListContainer');
+            
+            if (mySubmissions.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: #666; padding: 40px;">"${name}"님의 신청 내역이 없습니다.</p>`;
+                return;
+            }
+            
+            let html = `<h3>${name}님의 신청 내역 (총 ${mySubmissions.length}건)</h3>`;
+            mySubmissions.forEach((submission, index) => {
+                html += createSubmissionHTML(submission, index);
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // 월별 집계 페이지
+        function showMonthlyPage() {
+            hideAllPages();
+            document.getElementById('monthlyPage').classList.remove('hidden');
+            populateMonthSelect();
+        }
+
+        // 월 선택 옵션 생성
+        function populateMonthSelect() {
+            const months = [...new Set(allSubmissions.map(s => s.month))].sort().reverse();
+            const select = document.getElementById('monthSelect');
+            select.innerHTML = '<option value="">월을 선택하세요</option>';
+            
+            months.forEach(month => {
+                const date = new Date(month + '-01');
+                const monthText = date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' });
+                select.innerHTML += `<option value="${month}">${monthText}</option>`;
+            });
+        }
+
+        // 월별 데이터 로드
+        function loadMonthlyData() {
+            const selectedMonth = document.getElementById('monthSelect').value;
+            if (!selectedMonth) {
+                document.getElementById('monthlyStats').classList.add('hidden');
+                return;
+            }
+            
+            const monthlySubmissions = allSubmissions.filter(s => s.month === selectedMonth);
+            
+            // 월별 통계
+            const date = new Date(selectedMonth + '-01');
+            const monthText = date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' });
+            
+            document.getElementById('selectedMonth').textContent = monthText + ' 집계';
+            document.getElementById('monthlyPeople').textContent = new Set(monthlySubmissions.map(s => s.name)).size;
+            document.getElementById('monthlyCount').textContent = monthlySubmissions.length;
+            
+            // 월별 품목 총 수량
+            const totals = {};
+            monthlySubmissions.forEach(submission => {
+                ITEM_KEYS.forEach(key => {
+                    const quantity = parseInt(submission[key]) || 0;
+                    if (quantity > 0) {
+                        totals[key] = (totals[key] || 0) + quantity;
+                    }
+                });
+            });
+            
+            let summaryHtml = '<div class="total-summary-grid">';
+            ITEM_KEYS.forEach(key => {
+                if (totals[key] > 0) {
+                    summaryHtml += `
+                        <div class="total-item">
+                            <div class="item-name">${ITEM_INFO[key]}</div>
+                            <div class="item-total">${totals[key]}${ITEM_UNITS[key]}</div>
+                        </div>
+                    `;
+                }
+            });
+            summaryHtml += '</div>';
+            
+            document.getElementById('monthlySummary').innerHTML = summaryHtml || 
+                '<p style="text-align: center; color: #666;">해당 월에 신청된 품목이 없습니다.</p>';
+            
+            document.getElementById('monthlyStats').classList.remove('hidden');
+        }
+
+        // 페이지 전환 함수들
+        function hideAllPages() {
+            document.getElementById('formPage').style.display = 'none';
+            document.getElementById('successSection').classList.add('hidden');
+            document.getElementById('listPage').classList.add('hidden');
+            document.getElementById('myPage').classList.add('hidden');
+            document.getElementById('monthlyPage').classList.add('hidden');
+        }
+
+        function showFormPage() {
+            hideAllPages();
+            document.getElementById('formPage').style.display = 'block';
+        }
+
+        function resetForm() {
+            document.getElementById('itemForm').reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+        }
+
+        // 유틸리티 함수
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미화 품목 제출 시스템 (스크린샷 공유)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>미화 품목 제출 시스템</h1>
+            <p>제출 후 화면을 캡처해서 단톡방에 올려주세요!</p>
+        </header>
+
+        <div id="formSection">
+            <!-- 기본 폼 -->
+            <form id="itemForm">
+                <div class="form-group">
+                    <label for="name">신청자 이름:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="department">부서/팀:</label>
+                    <input type="text" id="department" name="department" required>
+                </div>
+                
+                <div class="items-section">
+                    <h3>필요한 품목</h3>
+                    <div class="item-row">
+                        <label for="envelope">봉투:</label>
+                        <input type="number" id="envelope" name="envelope" min="0" value="0" class="quantity-input">
+                        <span class="unit">개</span>
+                    </div>
+                    <div class="item-row">
+                        <label for="rag">걸레:</label>
+                        <input type="number" id="rag" name="rag" min="0" value="0" class="quantity-input">
+                        <span class="unit">개</span>
+                    </div>
+                    <div class="item-row">
+                        <label for="bleach">락스:</label>
+                        <input type="number" id="bleach" name="bleach" min="0" value="0" class="quantity-input">
+                        <span class="unit">병</span>
+                    </div>
+                    <div class="item-row">
+                        <label for="detergent">세제:</label>
+                        <input type="number" id="detergent" name="detergent" min="0" value="0" class="quantity-input">
+                        <span class="unit">병</span>
+                    </div>
+                    <div class="item-row">
+                        <label for="tissue">휴지:</label>
+                        <input type="number" id="tissue" name="tissue" min="0" value="0" class="quantity-input">
+                        <span class="unit">롤</span>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">제출하기</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">다시 작성</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 제출 완료 화면 (스크린샷용) -->
+        <div id="resultSection" class="hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin: 20px 0;">
+            <div style="text-align: center;">
+                <h2>🎉 제출 완료!</h2>
+                <div id="submissionCard" style="background: white; color: #333; padding: 25px; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <h3 style="color: #4CAF50; margin-bottom: 15px;">📋 미화 품목 신청서</h3>
+                    <div id="submissionDetails" style="text-align: left; font-size: 18px; line-height: 1.8;"></div>
+                    <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px dashed #eee;">
+                        <small style="color: #666;">📱 이 화면을 캡처해서 단톡방에 올려주세요!</small>
+                    </div>
+                </div>
+                
+                <div class="button-group" style="margin-top: 25px;">
+                    <button type="button" class="btn btn-primary" onclick="captureAndShare()" style="background: #fff; color: #667eea; border: 2px solid #fff;">📸 캡처하고 공유</button>
+                    <button type="button" class="btn btn-secondary" onclick="newSubmission()" style="background: transparent; border: 2px solid #fff;">새 신청</button>
+                    <button type="button" class="btn btn-secondary" onclick="showAllSubmissions()" style="background: transparent; border: 2px solid #fff;">전체 보기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 전체 현황 (단톡방 스크린샷들을 보고 수동 입력) -->
+        <div id="allSection" class="hidden">
+            <h2>📊 전체 신청 현황</h2>
+            <p style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                💡 <strong>사용법:</strong> 단톡방에 올라온 스크린샷들을 보고 아래에 정리해주세요!
+            </p>
+            
+            <div class="form-group">
+                <label>📝 신청 내역 정리:</label>
+                <textarea id="manualSummary" rows="10" placeholder="예시:
+김영희 (청소팀) - 걸레 5개, 락스 2병
+박순자 (관리팀) - 봉투 10개, 세제 3병
+이미순 (청소팀) - 휴지 4롤, 걸레 3개
+
+총 필요:
+- 걸레: 8개
+- 락스: 2병
+- 봉투: 10개
+- 세제: 3병
+- 휴지: 4롤" style="font-family: inherit; font-size: 16px;"></textarea>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" class="btn btn-print" onclick="printSummary()">📄 정리본 인쇄</button>
+                <button type="button" class="btn btn-secondary" onclick="newSubmission()">새 신청</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ITEM_INFO = {
+            envelope: '봉투',
+            rag: '걸레',
+            bleach: '락스',
+            detergent: '세제',
+            tissue: '휴지'
+        };
+
+        let currentSubmission = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('itemForm').addEventListener('submit', handleSubmit);
+        });
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            
+            // 검증
+            if (!data.name.trim() || !data.department.trim()) {
+                alert('이름과 부서를 입력해주세요.');
+                return;
+            }
+            
+            const hasItems = Object.keys(ITEM_INFO).some(key => parseInt(data[key]) > 0);
+            if (!hasItems) {
+                alert('최소 하나의 품목을 선택해주세요.');
+                return;
+            }
+            
+            currentSubmission = {
+                ...data,
+                timestamp: new Date().toLocaleString('ko-KR'),
+                date: new Date().toLocaleDateString('ko-KR')
+            };
+            
+            showResult();
+        }
+
+        function showResult() {
+            hideAllSections();
+            document.getElementById('resultSection').classList.remove('hidden');
+            
+            const items = [];
+            Object.keys(ITEM_INFO).forEach(key => {
+                if (parseInt(currentSubmission[key]) > 0) {
+                    items.push(`${ITEM_INFO[key]} ${currentSubmission[key]}개`);
+                }
+            });
+            
+            document.getElementById('submissionDetails').innerHTML = `
+                <div style="margin-bottom: 12px;">
+                    <strong>👤 신청자:</strong> ${currentSubmission.name}
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong>🏢 부서:</strong> ${currentSubmission.department}
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong>📅 신청일:</strong> ${currentSubmission.date}
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong>📦 신청 품목:</strong><br>
+                    ${items.map(item => `&nbsp;&nbsp;• ${item}`).join('<br>')}
+                </div>
+                <div style="font-size: 14px; color: #666;">
+                    <strong>⏰ 제출시간:</strong> ${currentSubmission.timestamp}
+                </div>
+            `;
+        }
+
+        function captureAndShare() {
+            // 모바일에서 스크린샷 안내
+            if (navigator.share) {
+                alert('📱 스크린샷을 찍으세요!\n\n1. 전원 버튼 + 볼륨 다운 버튼 동시에 누르기\n2. 캡처된 이미지를 단톡방에 올리기');
+            } else {
+                alert('📱 화면을 캡처해서 단톡방에 공유해주세요!');
+            }
+        }
+
+        function hideAllSections() {
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('allSection').classList.add('hidden');
+        }
+
+        function newSubmission() {
+            hideAllSections();
+            document.getElementById('formSection').style.display = 'block';
+            resetForm();
+        }
+
+        function showAllSubmissions() {
+            hideAllSections();
+            document.getElementById('allSection').classList.remove('hidden');
+        }
+
+        function resetForm() {
+            document.getElementById('itemForm').reset();
+            currentSubmission = null;
+        }
+
+        function printSummary() {
+            const content = document.getElementById('manualSummary').value;
+            if (!content.trim()) {
+                alert('정리할 내용을 입력해주세요.');
+                return;
+            }
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>미화 품목 신청 정리본</title>
+                    <style>
+                        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; }
+                        h1 { color: #4CAF50; }
+                        pre { white-space: pre-wrap; font-family: inherit; font-size: 16px; line-height: 1.6; }
+                    </style>
+                </head>
+                <body>
+                    <h1>📋 미화 품목 신청 정리본</h1>
+                    <p><strong>정리 일시:</strong> ${new Date().toLocaleString('ko-KR')}</p>
+                    <hr>
+                    <pre>${content}</pre>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>

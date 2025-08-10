@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#4CAF50">
+    <title>미화 품목 제출 시스템</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>미화 품목 제출 시스템</h1>
+            <p>필요한 품목과 수량을 입력해주세요</p>
+        </header>
+
+        <main>
+            <form id="itemForm">
+                <div class="form-group">
+                    <label for="name">신청자 이름:</label>
+                    <input type="text" id="name" name="name" required placeholder="이름을 입력하세요" autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="department">부서/팀:</label>
+                    <input type="text" id="department" name="department" required placeholder="부서명을 입력하세요" autocomplete="organization">
+                </div>
+
+                <div class="form-group">
+                    <label for="date">신청 날짜:</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+
+                <div class="items-section">
+                    <h3>필요한 품목</h3>
+                    
+                    <div class="item-row">
+                        <label for="envelope">봉투:</label>
+                        <input type="number" id="envelope" name="envelope" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="rag">걸레:</label>
+                        <input type="number" id="rag" name="rag" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="bleach">락스:</label>
+                        <input type="number" id="bleach" name="bleach" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="detergent">세제:</label>
+                        <input type="number" id="detergent" name="detergent" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="tissue">휴지:</label>
+                        <input type="number" id="tissue" name="tissue" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">롤</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="trashbag">쓰레기봉투:</label>
+                        <input type="number" id="trashbag" name="trashbag" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="gloves">장갑:</label>
+                        <input type="number" id="gloves" name="gloves" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">켤레</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="broom">빗자루:</label>
+                        <input type="number" id="broom" name="broom" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="mop">대걸레:</label>
+                        <input type="number" id="mop" name="mop" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="bucket">양동이:</label>
+                        <input type="number" id="bucket" name="bucket" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="sponge">수세미:</label>
+                        <input type="number" id="sponge" name="sponge" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="dishsoap">주방세제:</label>
+                        <input type="number" id="dishsoap" name="dishsoap" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="disinfectant">소독제:</label>
+                        <input type="number" id="disinfectant" name="disinfectant" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="glassclean">유리세정제:</label>
+                        <input type="number" id="glassclean" name="glassclean" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="toiletpaper">화장지:</label>
+                        <input type="number" id="toiletpaper" name="toiletpaper" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">롤</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="handsoap">손세정제:</label>
+                        <input type="number" id="handsoap" name="handsoap" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="towel">수건:</label>
+                        <input type="number" id="towel" name="towel" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="brush">솔:</label>
+                        <input type="number" id="brush" name="brush" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="dustpan">쓰레받기:</label>
+                        <input type="number" id="dustpan" name="dustpan" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="vacuum">진공청소기 필터:</label>
+                        <input type="number" id="vacuum" name="vacuum" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="airfresh">방향제:</label>
+                        <input type="number" id="airfresh" name="airfresh" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="floorclean">바닥세정제:</label>
+                        <input type="number" id="floorclean" name="floorclean" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="wipes">물티슈:</label>
+                        <input type="number" id="wipes" name="wipes" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">팩</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="mask">마스크:</label>
+                        <input type="number" id="mask" name="mask" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">박스</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="apron">앞치마:</label>
+                        <input type="number" id="apron" name="apron" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="scraper">스크래퍼:</label>
+                        <input type="number" id="scraper" name="scraper" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="spray">스프레이통:</label>
+                        <input type="number" id="spray" name="spray" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="memo">비고:</label>
+                    <textarea id="memo" name="memo" placeholder="추가 요청사항이 있으시면 입력해주세요" rows="3"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">제출하기</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">다시 작성</button>
+                    <button type="button" class="btn btn-print" onclick="printForm()">인쇄하기</button>
+                </div>
+            </form>
+        </main>
+
+        <div id="summary" class="summary hidden">
+            <h3>제출 내용 확인</h3>
+            <div id="summaryContent"></div>
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" onclick="confirmSubmit()">확인 제출</button>
+                <button type="button" class="btn btn-secondary" onclick="editForm()">수정하기</button>
+            </div>
+        </div>
+
+        <!-- 제출 완료 후 표시되는 영역 -->
+        <div id="successSection" class="success-section hidden">
+            <div class="success-message">
+                <h3>제출이 완료되었습니다!</h3>
+                <p id="successInfo"></p>
+                <p style="margin-top: 20px;">제출된 내용은 공개 목록에서 확인할 수 있습니다.</p>
+            </div>
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" onclick="goToListPage()">목록 보기</button>
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">새로운 신청</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 목록 페이지 -->
+    <div id="listPage" class="list-page hidden">
+        <div class="container">
+            <header>
+                <h1>미화 품목 신청 목록</h1>
+                <p>모든 신청 내역을 확인할 수 있습니다</p>
+            </header>
+
+            <div class="list-controls">
+                <div class="search-section">
+                    <input type="text" id="searchInput" placeholder="이름 또는 부서로 검색..." class="search-input">
+                    <button type="button" class="btn btn-secondary" onclick="filterList()">검색</button>
+                    <button type="button" class="btn btn-secondary" onclick="clearFilter()">전체보기</button>
+                </div>
+                <div class="view-controls">
+                    <button type="button" class="btn btn-primary" onclick="goToFormPage()">새 신청</button>
+                    <button type="button" class="btn btn-print" onclick="printSummary()">요약 인쇄</button>
+                </div>
+            </div>
+
+            <div class="list-content">
+                <div id="listContainer"></div>
+            </div>
+
+            <div class="summary-section">
+                <h3>전체 요약</h3>
+                <div id="totalSummary"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Firebase 설정
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+        
+        // Firebase 설정 (실제 사용시 본인의 Firebase 프로젝트 설정으로 교체)
+        const firebaseConfig = {
+            // 여기에 Firebase 설정을 넣어야 합니다
+            // 현재는 localStorage를 사용합니다
+        };
+        
+        // Firebase 초기화 (설정이 있을 때만)
+        if (firebaseConfig.apiKey) {
+            const app = initializeApp(firebaseConfig);
+            window.db = getFirestore(app);
+        }
+    </script>
+    <script src="script.js"></script>
+</body>
+</html> 

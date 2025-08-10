@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미화 품목 제출 시스템 (QR 공유)</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>미화 품목 제출 시스템</h1>
+            <p>제출 후 QR코드를 찍어서 공유하세요!</p>
+        </header>
+
+        <!-- 기본 폼 (이전과 동일) -->
+        <div id="formSection">
+            <form id="itemForm">
+                <div class="form-group">
+                    <label for="name">신청자 이름:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="department">부서/팀:</label>
+                    <input type="text" id="department" name="department" required>
+                </div>
+                <!-- 품목들... -->
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">제출하기</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- QR코드 표시 -->
+        <div id="qrSection" class="success-section hidden">
+            <div class="success-message">
+                <h3>제출 완료! 📱</h3>
+                <div id="submissionInfo"></div>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <h4>QR코드로 공유하기</h4>
+                    <div id="qrcode" style="display: inline-block; padding: 20px; background: white; border-radius: 10px;"></div>
+                    <p style="margin-top: 15px;">다른 분들이 이 QR코드를 찍으면<br>내 신청 내역을 볼 수 있어요!</p>
+                </div>
+                
+                <div class="button-group">
+                    <button type="button" class="btn btn-primary" onclick="shareQR()">QR코드 공유</button>
+                    <button type="button" class="btn btn-secondary" onclick="newSubmission()">새 신청</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // QR코드 생성 및 공유 로직
+        function generateQR(data) {
+            const url = createShareUrl(data);
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            
+            QRCode.toCanvas(qrContainer, url, {
+                width: 200,
+                height: 200,
+                margin: 2
+            }, function(error) {
+                if (error) console.error(error);
+            });
+        }
+
+        function shareQR() {
+            // QR코드 이미지를 캡처해서 공유
+            html2canvas(document.getElementById('qrcode')).then(canvas => {
+                canvas.toBlob(blob => {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: '미화 품목 신청',
+                            text: `${currentSubmission.name}님의 신청 내역`,
+                            files: [new File([blob], 'qr-code.png', { type: 'image/png' })]
+                        });
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>

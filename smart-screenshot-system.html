@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4CAF50">
+    <title>미화 품목 제출 시스템 (스마트 집계)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>미화 품목 제출 시스템</h1>
+            <p>제출하면 자동으로 총 수량이 계산됩니다!</p>
+        </header>
+
+        <!-- 메뉴 버튼들 -->
+        <div class="menu-buttons" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" onclick="showForm()">새 신청</button>
+            <button type="button" class="btn btn-secondary" onclick="showAllSubmissions()">전체 현황</button>
+            <button type="button" class="btn btn-secondary" onclick="showSummary()">총 수량</button>
+        </div>
+
+        <!-- 신청 폼 -->
+        <div id="formSection">
+            <form id="itemForm">
+                <div class="form-group">
+                    <label for="name">신청자 이름:</label>
+                    <input type="text" id="name" name="name" required placeholder="이름을 입력하세요" autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="department">부서/팀:</label>
+                    <input type="text" id="department" name="department" required placeholder="부서명을 입력하세요" autocomplete="organization">
+                </div>
+
+                <div class="items-section">
+                    <h3>필요한 품목</h3>
+                    
+                    <div class="item-row">
+                        <label for="envelope">봉투:</label>
+                        <input type="number" id="envelope" name="envelope" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="rag">걸레:</label>
+                        <input type="number" id="rag" name="rag" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="bleach">락스:</label>
+                        <input type="number" id="bleach" name="bleach" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="detergent">세제:</label>
+                        <input type="number" id="detergent" name="detergent" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="tissue">휴지:</label>
+                        <input type="number" id="tissue" name="tissue" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">롤</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="trashbag">쓰레기봉투:</label>
+                        <input type="number" id="trashbag" name="trashbag" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="gloves">장갑:</label>
+                        <input type="number" id="gloves" name="gloves" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">켤레</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="broom">빗자루:</label>
+                        <input type="number" id="broom" name="broom" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="memo">비고:</label>
+                    <textarea id="memo" name="memo" placeholder="추가 요청사항이 있으시면 입력해주세요" rows="3"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">제출하기</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">다시 작성</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 제출 완료 화면 (스크린샷용) -->
+        <div id="resultSection" class="hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin: 20px 0;">
+            <div style="text-align: center;">
+                <h2>🎉 제출 완료!</h2>
+                <div id="submissionCard" style="background: white; color: #333; padding: 25px; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                    <h3 style="color: #4CAF50; margin-bottom: 15px;">📋 미화 품목 신청서</h3>
+                    <div id="submissionDetails" style="text-align: left; font-size: 18px; line-height: 1.8;"></div>
+                    <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 2px dashed #eee;">
+                        <small style="color: #666;">📱 이 화면을 캡처해서 단톡방에 올려주세요!</small>
+                    </div>
+                </div>
+                
+                <div class="button-group" style="margin-top: 25px;">
+                    <button type="button" class="btn btn-primary" onclick="captureAndShare()" style="background: #fff; color: #667eea; border: 2px solid #fff;">📸 캡처 안내</button>
+                    <button type="button" class="btn btn-secondary" onclick="showSummary()" style="background: transparent; border: 2px solid #fff;">총 수량 보기</button>
+                    <button type="button" class="btn btn-secondary" onclick="newSubmission()" style="background: transparent; border: 2px solid #fff;">새 신청</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 전체 신청 현황 -->
+        <div id="allSection" class="hidden">
+            <h2>📊 전체 신청 현황</h2>
+            <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p><strong>총 신청자:</strong> <span id="totalPeople">0</span>명</p>
+                <p><strong>마지막 업데이트:</strong> <span id="lastUpdate">-</span></p>
+            </div>
+            
+            <div id="submissionsList"></div>
+            
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" onclick="showSummary()">📊 총 수량 보기</button>
+                <button type="button" class="btn btn-secondary" onclick="showForm()">새 신청</button>
+                <button type="button" class="btn btn-print" onclick="printAll()">전체 인쇄</button>
+            </div>
+        </div>
+
+        <!-- 총 수량 요약 -->
+        <div id="summarySection" class="hidden">
+            <h2>🧮 총 수량 요약</h2>
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p><strong>💡 구매 담당자용:</strong> 아래 수량으로 주문하시면 됩니다!</p>
+            </div>
+            
+            <div class="summary-section">
+                <h3>📦 구매해야 할 총 수량</h3>
+                <div id="totalSummary" class="total-summary-grid"></div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h4>📋 상세 내역</h4>
+                <div id="detailedBreakdown"></div>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" class="btn btn-print" onclick="printSummary()">📄 구매 목록 인쇄</button>
+                <button type="button" class="btn btn-secondary" onclick="showAllSubmissions()">전체 현황</button>
+                <button type="button" class="btn btn-secondary" onclick="showForm()">새 신청</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ITEM_INFO = {
+            envelope: '봉투',
+            rag: '걸레',
+            bleach: '락스',
+            detergent: '세제',
+            tissue: '휴지',
+            trashbag: '쓰레기봉투',
+            gloves: '장갑',
+            broom: '빗자루'
+        };
+
+        const ITEM_UNITS = {
+            envelope: '개',
+            rag: '개',
+            bleach: '병',
+            detergent: '병',
+            tissue: '롤',
+            trashbag: '개',
+            gloves: '켤레',
+            broom: '개'
+        };
+
+        let submissions = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('itemForm').addEventListener('submit', handleSubmit);
+            loadSubmissions();
+            showForm();
+        });
+
+        // 폼 제출 처리
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            
+            // 검증
+            if (!data.name.trim() || !data.department.trim()) {
+                alert('이름과 부서를 입력해주세요.');
+                return;
+            }
+            
+            const hasItems = Object.keys(ITEM_INFO).some(key => parseInt(data[key]) > 0);
+            if (!hasItems) {
+                alert('최소 하나의 품목을 선택해주세요.');
+                return;
+            }
+            
+            // 데이터 저장
+            const submission = {
+                ...data,
+                id: Date.now().toString(),
+                timestamp: new Date().toLocaleString('ko-KR'),
+                date: new Date().toLocaleDateString('ko-KR')
+            };
+            
+            submissions.push(submission);
+            saveSubmissions();
+            showResult(submission);
+        }
+
+        // 제출 완료 화면 표시
+        function showResult(submission) {
+            hideAllSections();
+            document.getElementById('resultSection').classList.remove('hidden');
+            
+            const items = [];
+            Object.keys(ITEM_INFO).forEach(key => {
+                if (parseInt(submission[key]) > 0) {
+                    items.push(`${ITEM_INFO[key]} ${submission[key]}${ITEM_UNITS[key]}`);
+                }
+            });
+            
+            document.getElementById('submissionDetails').innerHTML = `
+                <div style="margin-bottom: 12px;">
+                    <strong>👤 신청자:</strong> ${submission.name}
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong>🏢 부서:</strong> ${submission.department}
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong>📅 신청일:</strong> ${submission.date}
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <strong>📦 신청 품목:</strong><br>
+                    ${items.map(item => `&nbsp;&nbsp;• ${item}`).join('<br>')}
+                </div>
+                ${submission.memo ? `<div style="margin-bottom: 12px;"><strong>📝 비고:</strong> ${submission.memo}</div>` : ''}
+                <div style="font-size: 14px; color: #666;">
+                    <strong>⏰ 제출시간:</strong> ${submission.timestamp}
+                </div>
+            `;
+        }
+
+        // 전체 현황 표시
+        function showAllSubmissions() {
+            hideAllSections();
+            document.getElementById('allSection').classList.remove('hidden');
+            
+            document.getElementById('totalPeople').textContent = submissions.length;
+            document.getElementById('lastUpdate').textContent = submissions.length > 0 ? 
+                submissions[submissions.length - 1].timestamp : '-';
+            
+            let html = '';
+            submissions.forEach((submission, index) => {
+                const items = [];
+                Object.keys(ITEM_INFO).forEach(key => {
+                    if (parseInt(submission[key]) > 0) {
+                        items.push(`${ITEM_INFO[key]} ${submission[key]}${ITEM_UNITS[key]}`);
+                    }
+                });
+                
+                html += `
+                    <div class="submission-item" style="margin-bottom: 15px; padding: 20px; background: white; border-radius: 10px; border: 2px solid #e0e0e0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h4 style="margin: 0; color: #2E7D32;">${submission.name} (${submission.department})</h4>
+                            <div>
+                                <button onclick="editSubmission(${index})" class="btn btn-secondary" style="padding: 5px 10px; font-size: 14px; margin-right: 5px;">수정</button>
+                                <button onclick="deleteSubmission(${index})" class="btn btn-secondary" style="padding: 5px 10px; font-size: 14px; background: #f44336; color: white;">삭제</button>
+                            </div>
+                        </div>
+                        <p style="margin: 5px 0;"><strong>품목:</strong> ${items.join(', ')}</p>
+                        ${submission.memo ? `<p style="margin: 5px 0; font-style: italic; color: #666;"><strong>비고:</strong> ${submission.memo}</p>` : ''}
+                        <small style="color: #666;">${submission.timestamp}</small>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('submissionsList').innerHTML = html || 
+                '<p style="text-align: center; color: #666; padding: 40px;">아직 신청된 내역이 없습니다.</p>';
+        }
+
+        // 총 수량 요약 표시
+        function showSummary() {
+            hideAllSections();
+            document.getElementById('summarySection').classList.remove('hidden');
+            
+            const totals = {};
+            const breakdown = {};
+            
+            // 총 수량 계산
+            submissions.forEach(submission => {
+                Object.keys(ITEM_INFO).forEach(key => {
+                    const quantity = parseInt(submission[key]) || 0;
+                    if (quantity > 0) {
+                        totals[key] = (totals[key] || 0) + quantity;
+                        
+                        if (!breakdown[key]) breakdown[key] = [];
+                        breakdown[key].push(`${submission.name}: ${quantity}${ITEM_UNITS[key]}`);
+                    }
+                });
+            });
+            
+            // 총 수량 표시
+            let summaryHtml = '';
+            Object.keys(ITEM_INFO).forEach(key => {
+                if (totals[key] > 0) {
+                    summaryHtml += `
+                        <div class="total-item" style="background: white; padding: 20px; border-radius: 10px; text-align: center; border: 2px solid #4CAF50;">
+                            <div class="item-name" style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">${ITEM_INFO[key]}</div>
+                            <div class="item-total" style="font-size: 32px; color: #4CAF50; font-weight: bold;">${totals[key]}${ITEM_UNITS[key]}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            document.getElementById('totalSummary').innerHTML = summaryHtml || 
+                '<p style="text-align: center; color: #666;">신청된 품목이 없습니다.</p>';
+            
+            // 상세 내역 표시
+            let detailHtml = '';
+            Object.keys(ITEM_INFO).forEach(key => {
+                if (breakdown[key]) {
+                    detailHtml += `
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="color: #4CAF50; margin-bottom: 8px;">${ITEM_INFO[key]} (총 ${totals[key]}${ITEM_UNITS[key]})</h5>
+                            <ul style="margin: 0; padding-left: 20px;">
+                                ${breakdown[key].map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+            });
+            
+            document.getElementById('detailedBreakdown').innerHTML = detailHtml || 
+                '<p style="color: #666;">신청된 품목이 없습니다.</p>';
+        }
+
+        // 신청 수정
+        function editSubmission(index) {
+            const submission = submissions[index];
+            
+            // 폼에 데이터 채우기
+            document.getElementById('name').value = submission.name;
+            document.getElementById('department').value = submission.department;
+            document.getElementById('memo').value = submission.memo || '';
+            
+            Object.keys(ITEM_INFO).forEach(key => {
+                document.getElementById(key).value = submission[key] || 0;
+            });
+            
+            // 기존 신청 삭제
+            submissions.splice(index, 1);
+            saveSubmissions();
+            
+            showForm();
+            alert('수정 모드입니다. 다시 제출해주세요.');
+        }
+
+        // 신청 삭제
+        function deleteSubmission(index) {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                submissions.splice(index, 1);
+                saveSubmissions();
+                showAllSubmissions();
+            }
+        }
+
+        // 섹션 표시 함수들
+        function hideAllSections() {
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('allSection').classList.add('hidden');
+            document.getElementById('summarySection').classList.add('hidden');
+        }
+
+        function showForm() {
+            hideAllSections();
+            document.getElementById('formSection').style.display = 'block';
+        }
+
+        function newSubmission() {
+            showForm();
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('itemForm').reset();
+        }
+
+        function captureAndShare() {
+            alert('📱 스크린샷 찍는 방법:\n\n안드로이드: 전원 버튼 + 볼륨 다운 버튼\niPhone: 사이드 버튼 + 볼륨 업 버튼\n\n캡처한 이미지를 단톡방에 올려주세요!');
+        }
+
+        // 데이터 저장/로드
+        function saveSubmissions() {
+            localStorage.setItem('cleaningSubmissions', JSON.stringify(submissions));
+        }
+
+        function loadSubmissions() {
+            submissions = JSON.parse(localStorage.getItem('cleaningSubmissions') || '[]');
+        }
+
+        // 인쇄 함수들
+        function printSummary() {
+            const totals = {};
+            submissions.forEach(submission => {
+                Object.keys(ITEM_INFO).forEach(key => {
+                    const quantity = parseInt(submission[key]) || 0;
+                    if (quantity > 0) {
+                        totals[key] = (totals[key] || 0) + quantity;
+                    }
+                });
+            });
+            
+            let printContent = `
+                <h1>📦 미화 품목 구매 목록</h1>
+                <p><strong>생성일:</strong> ${new Date().toLocaleString('ko-KR')}</p>
+                <p><strong>총 신청자:</strong> ${submissions.length}명</p>
+                <hr>
+                <h2>구매해야 할 품목</h2>
+            `;
+            
+            Object.keys(ITEM_INFO).forEach(key => {
+                if (totals[key] > 0) {
+                    printContent += `<p><strong>${ITEM_INFO[key]}:</strong> ${totals[key]}${ITEM_UNITS[key]}</p>`;
+                }
+            });
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>미화 품목 구매 목록</title>
+                    <style>
+                        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; }
+                        h1 { color: #4CAF50; }
+                        p { font-size: 16px; line-height: 1.6; }
+                    </style>
+                </head>
+                <body>${printContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function printAll() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

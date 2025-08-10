@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미화 품목 제출 시스템 (공유 버전)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>미화 품목 제출 시스템</h1>
+            <p>제출 후 WhatsApp/카카오톡으로 관리자에게 자동 전송됩니다</p>
+        </header>
+
+        <form id="itemForm">
+            <div class="form-group">
+                <label for="name">신청자 이름:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="department">부서/팀:</label>
+                <input type="text" id="department" name="department" required>
+            </div>
+
+            <!-- 기존 28개 품목 유지 -->
+            <div class="items-section">
+                <h3>필요한 품목</h3>
+                
+                <div class="item-row">
+                    <label for="envelope">봉투:</label>
+                    <input type="number" id="envelope" name="envelope" min="0" value="0" class="quantity-input">
+                    <span class="unit">개</span>
+                </div>
+
+                <div class="item-row">
+                    <label for="rag">걸레:</label>
+                    <input type="number" id="rag" name="rag" min="0" value="0" class="quantity-input">
+                    <span class="unit">개</span>
+                </div>
+
+                <!-- 나머지 26개 품목들... -->
+                
+            </div>
+
+            <button type="submit" class="btn btn-primary">제출하기</button>
+        </form>
+
+        <div id="success" class="success-section" style="display: none;">
+            <div class="success-message">
+                <h3>제출이 완료되었습니다!</h3>
+                <p id="successInfo"></p>
+            </div>
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" onclick="sendToManager()">관리자에게 전송</button>
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">새로운 신청</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSubmission = null;
+
+        document.getElementById('itemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // 제출된 품목들만 추출
+            const items = [];
+            const itemNames = {
+                envelope: '봉투', rag: '걸레', bleach: '락스'
+                // ... 나머지 품목들
+            };
+            
+            for (let [key, value] of Object.entries(data)) {
+                if (itemNames[key] && parseInt(value) > 0) {
+                    items.push(`${itemNames[key]} ${value}개`);
+                }
+            }
+            
+            currentSubmission = {
+                name: data.name,
+                department: data.department,
+                date: new Date().toLocaleDateString('ko-KR'),
+                items: items.join(', ')
+            };
+            
+            // 성공 메시지 표시
+            document.getElementById('itemForm').style.display = 'none';
+            document.getElementById('success').style.display = 'block';
+            document.getElementById('successInfo').innerHTML = `
+                신청자: ${currentSubmission.name}<br>
+                부서: ${currentSubmission.department}<br>
+                품목: ${currentSubmission.items}
+            `;
+        });
+
+        function sendToManager() {
+            if (!currentSubmission) return;
+            
+            // WhatsApp 또는 카카오톡으로 전송할 메시지 생성
+            const message = `[미화 품목 신청]
+신청자: ${currentSubmission.name}
+부서: ${currentSubmission.department}
+날짜: ${currentSubmission.date}
+품목: ${currentSubmission.items}`;
+            
+            // WhatsApp 링크 (관리자 전화번호 필요)
+            const whatsappUrl = `https://wa.me/821012345678?text=${encodeURIComponent(message)}`;
+            
+            // 카카오톡 링크 (또는 SMS)
+            const smsUrl = `sms:01012345678?body=${encodeURIComponent(message)}`;
+            
+            // 사용자가 선택할 수 있도록
+            if (confirm('WhatsApp으로 전송하시겠습니까? (취소하면 SMS로 전송)')) {
+                window.open(whatsappUrl, '_blank');
+            } else {
+                window.open(smsUrl, '_blank');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('itemForm').style.display = 'block';
+            document.getElementById('success').style.display = 'none';
+            document.getElementById('itemForm').reset();
+            currentSubmission = null;
+        }
+    </script>
+</body>
+</html>

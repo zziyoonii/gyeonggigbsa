@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4CAF50">
+    <title>미화 품목 제출 시스템 (Google Sheets)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>미화 품목 제출 시스템</h1>
+            <p>Google Sheets에 실시간 저장됩니다</p>
+        </header>
+
+        <!-- 메뉴 버튼들 -->
+        <div class="menu-buttons" style="text-align: center; margin-bottom: 30px;">
+            <button type="button" class="btn btn-primary" onclick="showForm()">새 신청</button>
+            <button type="button" class="btn btn-secondary" onclick="showAllSubmissions()">전체 현황</button>
+            <button type="button" class="btn btn-secondary" onclick="showMySubmissions()">내 신청 내역</button>
+        </div>
+
+        <!-- 신청 폼 -->
+        <div id="formSection">
+            <form id="itemForm">
+                <div class="form-group">
+                    <label for="name">신청자 이름:</label>
+                    <input type="text" id="name" name="name" required placeholder="이름을 입력하세요" autocomplete="name">
+                </div>
+
+                <div class="form-group">
+                    <label for="department">부서/팀:</label>
+                    <input type="text" id="department" name="department" required placeholder="부서명을 입력하세요" autocomplete="organization">
+                </div>
+
+                <div class="form-group">
+                    <label for="date">신청 날짜:</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+
+                <div class="items-section">
+                    <h3>필요한 품목</h3>
+                    
+                    <div class="item-row">
+                        <label for="envelope">봉투:</label>
+                        <input type="number" id="envelope" name="envelope" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="rag">걸레:</label>
+                        <input type="number" id="rag" name="rag" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="bleach">락스:</label>
+                        <input type="number" id="bleach" name="bleach" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="detergent">세제:</label>
+                        <input type="number" id="detergent" name="detergent" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="tissue">휴지:</label>
+                        <input type="number" id="tissue" name="tissue" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
+                        <span class="unit">롤</span>
+                    </div>
+
+                    <!-- 간단히 5개만 표시, 나머지는 필요시 추가 -->
+                </div>
+
+                <div class="form-group">
+                    <label for="memo">비고:</label>
+                    <textarea id="memo" name="memo" placeholder="추가 요청사항이 있으시면 입력해주세요" rows="3"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">제출하기</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">다시 작성</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 성공 메시지 -->
+        <div id="successSection" class="success-section hidden">
+            <div class="success-message">
+                <h3>제출이 완료되었습니다!</h3>
+                <p id="successInfo"></p>
+                <p style="margin-top: 20px;">Google Sheets에서 전체 현황을 확인할 수 있습니다.</p>
+            </div>
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" onclick="showAllSubmissions()">전체 현황 보기</button>
+                <button type="button" class="btn btn-secondary" onclick="showForm()">새로운 신청</button>
+            </div>
+        </div>
+
+        <!-- 전체 현황 섹션 -->
+        <div id="allSubmissionsSection" class="hidden">
+            <h2>전체 신청 현황</h2>
+            <p>아래 링크를 클릭하면 Google Sheets에서 실시간 현황을 확인할 수 있습니다.</p>
+            <div class="button-group">
+                <a href="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit#gid=0" target="_blank" class="btn btn-primary">Google Sheets에서 보기</a>
+                <button type="button" class="btn btn-secondary" onclick="showForm()">돌아가기</button>
+            </div>
+            
+            <!-- 간단한 현황 표시 (선택사항) -->
+            <div id="summaryDisplay" style="margin-top: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 10px;">
+                <h3>오늘 신청 현황</h3>
+                <p id="todayCount">로딩 중...</p>
+            </div>
+        </div>
+
+        <!-- 내 신청 내역 섹션 -->
+        <div id="mySubmissionsSection" class="hidden">
+            <h2>내 신청 내역</h2>
+            <div class="form-group">
+                <label for="searchName">이름으로 검색:</label>
+                <input type="text" id="searchName" placeholder="이름을 입력하세요">
+                <button type="button" class="btn btn-secondary" onclick="searchMySubmissions()">검색</button>
+            </div>
+            <div id="mySubmissionsList"></div>
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary" onclick="showForm()">돌아가기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Google Apps Script 웹앱 URL (실제 배포 후 URL로 교체 필요)
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+        
+        // Google Sheets ID (실제 시트 ID로 교체 필요)
+        const GOOGLE_SHEET_ID = 'YOUR_SHEET_ID';
+
+        // 품목 정보
+        const ITEM_INFO = {
+            envelope: '봉투',
+            rag: '걸레',
+            bleach: '락스',
+            detergent: '세제',
+            tissue: '휴지'
+        };
+
+        // 페이지 로드시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+            
+            document.getElementById('itemForm').addEventListener('submit', handleFormSubmit);
+            showForm();
+        });
+
+        // 폼 제출 처리
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            
+            // 필수 필드 검증
+            if (!data.name.trim()) {
+                alert('이름을 입력해주세요.');
+                return;
+            }
+            
+            if (!data.department.trim()) {
+                alert('부서/팀을 입력해주세요.');
+                return;
+            }
+            
+            // 최소 하나의 품목이 선택되었는지 확인
+            const hasItems = Object.keys(ITEM_INFO).some(item => parseInt(data[item]) > 0);
+            if (!hasItems) {
+                alert('최소 하나의 품목을 선택해주세요.');
+                return;
+            }
+            
+            try {
+                // Google Sheets에 제출
+                await submitToGoogleSheets(data);
+                
+                // 성공 메시지 표시
+                showSuccess(data);
+                
+            } catch (error) {
+                console.error('제출 실패:', error);
+                alert('제출 중 오류가 발생했습니다. 다시 시도해주세요.');
+            }
+        }
+
+        // Google Sheets에 데이터 제출
+        async function submitToGoogleSheets(data) {
+            const submissionData = {
+                timestamp: new Date().toLocaleString('ko-KR'),
+                name: data.name,
+                department: data.department,
+                date: data.date,
+                envelope: data.envelope || 0,
+                rag: data.rag || 0,
+                bleach: data.bleach || 0,
+                detergent: data.detergent || 0,
+                tissue: data.tissue || 0,
+                memo: data.memo || ''
+            };
+
+            const response = await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(submissionData),
+                mode: 'no-cors' // Google Apps Script 때문에 필요
+            });
+
+            // no-cors 모드에서는 응답을 확인할 수 없으므로 성공으로 간주
+            return true;
+        }
+
+        // 섹션 표시 함수들
+        function showForm() {
+            hideAllSections();
+            document.getElementById('formSection').style.display = 'block';
+        }
+
+        function showSuccess(data) {
+            hideAllSections();
+            document.getElementById('successSection').classList.remove('hidden');
+            
+            // 제출된 품목들 표시
+            const items = [];
+            Object.keys(ITEM_INFO).forEach(key => {
+                if (parseInt(data[key]) > 0) {
+                    items.push(`${ITEM_INFO[key]} ${data[key]}개`);
+                }
+            });
+            
+            document.getElementById('successInfo').innerHTML = `
+                신청자: ${data.name}<br>
+                부서: ${data.department}<br>
+                신청 품목: ${items.join(', ')}
+            `;
+        }
+
+        function showAllSubmissions() {
+            hideAllSections();
+            document.getElementById('allSubmissionsSection').classList.remove('hidden');
+            
+            // Google Sheets 링크 업데이트
+            const link = document.querySelector('#allSubmissionsSection a');
+            link.href = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit#gid=0`;
+        }
+
+        function showMySubmissions() {
+            hideAllSections();
+            document.getElementById('mySubmissionsSection').classList.remove('hidden');
+        }
+
+        function hideAllSections() {
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('successSection').classList.add('hidden');
+            document.getElementById('allSubmissionsSection').classList.add('hidden');
+            document.getElementById('mySubmissionsSection').classList.add('hidden');
+        }
+
+        // 내 신청 내역 검색 (제한적 기능)
+        function searchMySubmissions() {
+            const name = document.getElementById('searchName').value.trim();
+            if (!name) {
+                alert('이름을 입력해주세요.');
+                return;
+            }
+            
+            // Google Sheets에서 데이터를 가져오는 것은 복잡하므로
+            // 간단한 안내 메시지 표시
+            document.getElementById('mySubmissionsList').innerHTML = `
+                <div style="padding: 20px; background-color: #e8f5e8; border-radius: 8px; margin-top: 20px;">
+                    <h4>${name}님의 신청 내역</h4>
+                    <p>상세한 내역은 <a href="https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/edit#gid=0" target="_blank">Google Sheets</a>에서 "${name}"으로 검색해서 확인하세요.</p>
+                    <p><strong>수정이 필요한 경우:</strong></p>
+                    <ol>
+                        <li>Google Sheets에서 해당 행을 찾기</li>
+                        <li>직접 수정하거나</li>
+                        <li>관리자에게 요청하기</li>
+                    </ol>
+                </div>
+            `;
+        }
+
+        function resetForm() {
+            document.getElementById('itemForm').reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+        }
+    </script>
+</body>
+</html>

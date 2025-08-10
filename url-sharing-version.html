@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>미화 품목 제출 시스템 (URL 공유)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>미화 품목 제출 시스템</h1>
+            <p>제출 후 링크를 복사해서 단톡방에 공유하세요!</p>
+        </header>
+
+        <!-- 제출 폼 -->
+        <div id="formSection">
+            <form id="itemForm">
+                <div class="form-group">
+                    <label for="name">신청자 이름:</label>
+                    <input type="text" id="name" name="name" required placeholder="이름을 입력하세요">
+                </div>
+
+                <div class="form-group">
+                    <label for="department">부서/팀:</label>
+                    <input type="text" id="department" name="department" required placeholder="부서명을 입력하세요">
+                </div>
+
+                <div class="items-section">
+                    <h3>필요한 품목</h3>
+                    
+                    <div class="item-row">
+                        <label for="envelope">봉투:</label>
+                        <input type="number" id="envelope" name="envelope" min="0" value="0" class="quantity-input">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="rag">걸레:</label>
+                        <input type="number" id="rag" name="rag" min="0" value="0" class="quantity-input">
+                        <span class="unit">개</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="bleach">락스:</label>
+                        <input type="number" id="bleach" name="bleach" min="0" value="0" class="quantity-input">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="detergent">세제:</label>
+                        <input type="number" id="detergent" name="detergent" min="0" value="0" class="quantity-input">
+                        <span class="unit">병</span>
+                    </div>
+
+                    <div class="item-row">
+                        <label for="tissue">휴지:</label>
+                        <input type="number" id="tissue" name="tissue" min="0" value="0" class="quantity-input">
+                        <span class="unit">롤</span>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">제출하기</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">다시 작성</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 제출 완료 섹션 -->
+        <div id="successSection" class="success-section hidden">
+            <div class="success-message">
+                <h3>제출이 완료되었습니다!</h3>
+                <div id="submissionSummary"></div>
+                
+                <div style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border-radius: 8px;">
+                    <h4>📱 단톡방에 공유하기</h4>
+                    <p>아래 링크를 복사해서 단톡방에 보내주세요!</p>
+                    <div style="background-color: white; padding: 10px; border-radius: 5px; margin: 10px 0; word-break: break-all; font-size: 14px;" id="shareUrl"></div>
+                    <button type="button" class="btn btn-secondary" onclick="copyUrl()">링크 복사</button>
+                    <button type="button" class="btn btn-secondary" onclick="shareToKakao()">카톡으로 공유</button>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" onclick="showAllSubmissions()">모든 신청 보기</button>
+                <button type="button" class="btn btn-secondary" onclick="newSubmission()">새로운 신청</button>
+            </div>
+        </div>
+
+        <!-- 전체 신청 현황 -->
+        <div id="allSubmissionsSection" class="hidden">
+            <h2>📋 모든 신청 현황</h2>
+            <p>단톡방에 공유된 모든 신청 내역입니다</p>
+            
+            <div id="allSubmissionsList"></div>
+            
+            <div class="summary-section">
+                <h3>🧮 전체 요약</h3>
+                <div id="totalSummary"></div>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary" onclick="newSubmission()">새 신청하기</button>
+                <button type="button" class="btn btn-print" onclick="printSummary()">요약 인쇄</button>
+            </div>
+        </div>
+
+        <!-- 개별 신청 보기 (URL 파라미터로 접근) -->
+        <div id="viewSubmissionSection" class="hidden">
+            <h2>📝 신청 내역</h2>
+            <div id="submissionDetails"></div>
+            
+            <div class="button-group">
+                <button type="button" class="btn btn-primary" onclick="editSubmission()">수정하기</button>
+                <button type="button" class="btn btn-secondary" onclick="showAllSubmissions()">전체 보기</button>
+                <button type="button" class="btn btn-print" onclick="printThis()">인쇄하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ITEM_INFO = {
+            envelope: '봉투',
+            rag: '걸레',
+            bleach: '락스',
+            detergent: '세제',
+            tissue: '휴지'
+        };
+
+        let currentSubmission = null;
+        let allSubmissions = []; // URL에서 수집된 모든 신청들
+
+        // 페이지 로드시
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('itemForm').addEventListener('submit', handleSubmit);
+            
+            // URL 파라미터 확인
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.has('view')) {
+                // 개별 신청 보기 모드
+                showSubmissionFromUrl(urlParams);
+            } else if (urlParams.has('all')) {
+                // 전체 보기 모드
+                showAllFromUrl();
+            } else {
+                // 기본 폼 모드
+                showForm();
+            }
+        });
+
+        // 폼 제출 처리
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            
+            // 검증
+            if (!data.name.trim() || !data.department.trim()) {
+                alert('이름과 부서를 입력해주세요.');
+                return;
+            }
+            
+            const hasItems = Object.keys(ITEM_INFO).some(key => parseInt(data[key]) > 0);
+            if (!hasItems) {
+                alert('최소 하나의 품목을 선택해주세요.');
+                return;
+            }
+            
+            // 현재 시간 추가
+            data.timestamp = new Date().toLocaleString('ko-KR');
+            data.id = Date.now().toString();
+            
+            currentSubmission = data;
+            showSuccess();
+        }
+
+        // 성공 화면 표시
+        function showSuccess() {
+            hideAllSections();
+            document.getElementById('successSection').classList.remove('hidden');
+            
+            // 신청 요약 표시
+            const items = [];
+            Object.keys(ITEM_INFO).forEach(key => {
+                if (parseInt(currentSubmission[key]) > 0) {
+                    items.push(`${ITEM_INFO[key]} ${currentSubmission[key]}개`);
+                }
+            });
+            
+            document.getElementById('submissionSummary').innerHTML = `
+                <p><strong>신청자:</strong> ${currentSubmission.name}</p>
+                <p><strong>부서:</strong> ${currentSubmission.department}</p>
+                <p><strong>신청 품목:</strong> ${items.join(', ')}</p>
+                <p><strong>신청 시간:</strong> ${currentSubmission.timestamp}</p>
+            `;
+            
+            // 공유 URL 생성
+            const shareUrl = createShareUrl(currentSubmission);
+            document.getElementById('shareUrl').textContent = shareUrl;
+        }
+
+        // 공유 URL 생성
+        function createShareUrl(data) {
+            const baseUrl = window.location.origin + window.location.pathname;
+            const params = new URLSearchParams();
+            
+            params.set('view', '1');
+            params.set('name', data.name);
+            params.set('dept', data.department);
+            params.set('time', data.timestamp);
+            params.set('id', data.id);
+            
+            Object.keys(ITEM_INFO).forEach(key => {
+                if (parseInt(data[key]) > 0) {
+                    params.set(key, data[key]);
+                }
+            });
+            
+            return baseUrl + '?' + params.toString();
+        }
+
+        // URL 복사
+        function copyUrl() {
+            const url = document.getElementById('shareUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('링크가 복사되었습니다! 단톡방에 붙여넣기 하세요.');
+            }).catch(() => {
+                // 복사 실패시 수동 선택
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('링크가 복사되었습니다!');
+            });
+        }
+
+        // 카카오톡 공유
+        function shareToKakao() {
+            const url = document.getElementById('shareUrl').textContent;
+            const message = `[미화 품목 신청]\n${currentSubmission.name}님이 신청하셨습니다.\n\n${url}`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: '미화 품목 신청',
+                    text: message,
+                    url: url
+                });
+            } else {
+                copyUrl();
+            }
+        }
+
+        // URL에서 신청 정보 표시
+        function showSubmissionFromUrl(urlParams) {
+            hideAllSections();
+            document.getElementById('viewSubmissionSection').classList.remove('hidden');
+            
+            const submission = {
+                name: urlParams.get('name'),
+                department: urlParams.get('dept'),
+                timestamp: urlParams.get('time'),
+                id: urlParams.get('id')
+            };
+            
+            const items = [];
+            Object.keys(ITEM_INFO).forEach(key => {
+                const value = urlParams.get(key);
+                if (value && parseInt(value) > 0) {
+                    submission[key] = value;
+                    items.push(`${ITEM_INFO[key]} ${value}개`);
+                }
+            });
+            
+            document.getElementById('submissionDetails').innerHTML = `
+                <div class="submission-item">
+                    <h3>${submission.name}님의 신청</h3>
+                    <p><strong>부서:</strong> ${submission.department}</p>
+                    <p><strong>신청 시간:</strong> ${submission.timestamp}</p>
+                    <p><strong>신청 품목:</strong> ${items.join(', ')}</p>
+                </div>
+            `;
+            
+            currentSubmission = submission;
+        }
+
+        // 전체 보기 (URL 수집)
+        function showAllSubmissions() {
+            // 실제로는 단톡방에 공유된 링크들을 수동으로 모아야 함
+            // 여기서는 데모용으로 localStorage 사용
+            const saved = JSON.parse(localStorage.getItem('demoSubmissions') || '[]');
+            
+            hideAllSections();
+            document.getElementById('allSubmissionsSection').classList.remove('hidden');
+            
+            if (saved.length === 0) {
+                document.getElementById('allSubmissionsList').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <h3>아직 공유된 신청이 없습니다</h3>
+                        <p>단톡방에 공유된 링크를 클릭하면 여기서 볼 수 있습니다</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            const totals = {};
+            
+            saved.forEach(submission => {
+                const items = [];
+                Object.keys(ITEM_INFO).forEach(key => {
+                    if (submission[key] && parseInt(submission[key]) > 0) {
+                        items.push(`${ITEM_INFO[key]} ${submission[key]}개`);
+                        totals[key] = (totals[key] || 0) + parseInt(submission[key]);
+                    }
+                });
+                
+                html += `
+                    <div class="submission-item">
+                        <h4>${submission.name} (${submission.department})</h4>
+                        <p>${items.join(', ')}</p>
+                        <small>${submission.timestamp}</small>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('allSubmissionsList').innerHTML = html;
+            
+            // 전체 요약
+            let summaryHtml = '<div class="total-summary-grid">';
+            Object.keys(ITEM_INFO).forEach(key => {
+                if (totals[key] > 0) {
+                    summaryHtml += `
+                        <div class="total-item">
+                            <div class="item-name">${ITEM_INFO[key]}</div>
+                            <div class="item-total">${totals[key]}개</div>
+                        </div>
+                    `;
+                }
+            });
+            summaryHtml += '</div>';
+            
+            document.getElementById('totalSummary').innerHTML = summaryHtml;
+        }
+
+        // 섹션 표시 함수들
+        function hideAllSections() {
+            document.getElementById('formSection').style.display = 'none';
+            document.getElementById('successSection').classList.add('hidden');
+            document.getElementById('allSubmissionsSection').classList.add('hidden');
+            document.getElementById('viewSubmissionSection').classList.add('hidden');
+        }
+
+        function showForm() {
+            hideAllSections();
+            document.getElementById('formSection').style.display = 'block';
+        }
+
+        function newSubmission() {
+            // URL 파라미터 제거하고 폼으로 이동
+            window.history.pushState({}, '', window.location.pathname);
+            showForm();
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('itemForm').reset();
+        }
+
+        function editSubmission() {
+            // 현재 신청 정보로 폼 채우기
+            if (currentSubmission) {
+                document.getElementById('name').value = currentSubmission.name;
+                document.getElementById('department').value = currentSubmission.department;
+                
+                Object.keys(ITEM_INFO).forEach(key => {
+                    if (currentSubmission[key]) {
+                        document.getElementById(key).value = currentSubmission[key];
+                    }
+                });
+                
+                showForm();
+            }
+        }
+
+        // 데모용: 현재 신청을 로컬에 저장
+        function saveForDemo() {
+            if (currentSubmission) {
+                const saved = JSON.parse(localStorage.getItem('demoSubmissions') || '[]');
+                saved.push(currentSubmission);
+                localStorage.setItem('demoSubmissions', JSON.stringify(saved));
+            }
+        }
+
+        // 페이지 언로드시 데모 저장
+        window.addEventListener('beforeunload', saveForDemo);
+    </script>
+</body>
+</html>
