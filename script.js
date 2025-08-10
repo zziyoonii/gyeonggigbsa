@@ -371,28 +371,44 @@ function handleFormSubmit(event) {
 
 // 신청 수정 업데이트
 function updateSubmission(data, index) {
+    // Sheets 우선 업데이트
+    if (SHEETS_API_URL && window.editTargetId) {
+        sheetsUpdateSubmission(window.editTargetId, { ...data, month: (data.date||'').slice(0,7) })
+          .then(() => {
+            window.editMode = false;
+            window.editIndex = undefined;
+            window.editTargetId = undefined;
+            document.querySelector('button[type="submit"]').textContent = '제출하기';
+            showMobileAlert('수정이 완료되었습니다.', 'success');
+            goToListPage();
+          })
+          .catch((err) => {
+            console.warn('Sheets 업데이트 실패, localStorage로 fallback:', err);
+            // fallback: localStorage 갱신
+            const submissions = JSON.parse(localStorage.getItem('cleaningSubmissions') || '[]');
+            if (submissions[index]) {
+                submissions[index] = { ...submissions[index], ...data, updatedAt: new Date().toISOString() };
+                localStorage.setItem('cleaningSubmissions', JSON.stringify(submissions));
+            }
+            window.editMode = false;
+            window.editIndex = undefined;
+            window.editTargetId = undefined;
+            document.querySelector('button[type="submit"]').textContent = '제출하기';
+            showMobileAlert('수정이 완료되었습니다.', 'success');
+            goToListPage();
+          });
+        return;
+    }
+    // fallback only: localStorage
     const submissions = JSON.parse(localStorage.getItem('cleaningSubmissions') || '[]');
-    
     if (submissions[index]) {
-        // 기존 데이터 업데이트
-        submissions[index] = {
-            ...submissions[index],
-            ...data,
-            updatedAt: new Date().toISOString()
-        };
-        
+        submissions[index] = { ...submissions[index], ...data, updatedAt: new Date().toISOString() };
         localStorage.setItem('cleaningSubmissions', JSON.stringify(submissions));
-        
-        // 수정 모드 해제
         window.editMode = false;
         window.editIndex = undefined;
-        
-        // 제출 버튼 텍스트 복원
+        window.editTargetId = undefined;
         document.querySelector('button[type="submit"]').textContent = '제출하기';
-        
         showMobileAlert('수정이 완료되었습니다.', 'success');
-        
-        // 목록 페이지로 이동
         goToListPage();
     }
 }
@@ -561,32 +577,36 @@ function goToFormPage() {
 async function loadSubmissions() {
     try {
         const submissions = await loadSubmissionsFromDatabase();
+        // 전역에 현재 목록 보관(수정/삭제/인쇄/검색에 사용)
+        window.currentSubmissions = Array.isArray(submissions) ? submissions.slice() : [];
         const container = document.getElementById('listContainer');
         
-        if (submissions.length === 0) {
+        if (window.currentSubmissions.length === 0) {
             container.innerHTML = '<p style="text-align: center; font-size: 18px; color: #666;">아직 신청된 내역이 없습니다.</p>';
-            updateTotalSummary({});
+            updateTotalSummary([]);
             return;
         }
         
         // 최신순으로 정렬 (Firebase는 이미 정렬되어 있지만 localStorage는 필요)
-        submissions.sort((a, b) => {
+        window.currentSubmissions.sort((a, b) => {
             const dateA = new Date(a.submittedAt);
             const dateB = new Date(b.submittedAt);
             return dateB - dateA;
         });
         
         let html = '';
-        submissions.forEach((submission, index) => {
+        window.currentSubmissions.forEach((submission, index) => {
             html += createSubmissionHTML(submission, index);
         });
         
         container.innerHTML = html;
-        updateTotalSummary(submissions);
+        updateTotalSummary(window.currentSubmissions);
     } catch (error) {
         console.error('목록 로드 실패:', error);
         const container = document.getElementById('listContainer');
         container.innerHTML = '<p style="text-align: center; font-size: 18px; color: #f44336;">목록을 불러오는 중 오류가 발생했습니다.</p>';
+        // 총계도 초기화
+        updateTotalSummary([]);
     }
 }
 
@@ -691,8 +711,8 @@ function updateTotalSummary(submissions) {
 // 검색 필터링
 function filterList() {
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const submissions = JSON.parse(localStorage.getItem('cleaningSubmissions') || '[]');
-    const filtered = submissions.filter(submission => 
+    const base = Array.isArray(window.currentSubmissions) ? window.currentSubmissions : [];
+    const filtered = base.filter(submission => 
         submission.name.toLowerCase().includes(searchTerm) ||
         submission.department.toLowerCase().includes(searchTerm)
     );
@@ -706,7 +726,7 @@ function filterList() {
     
     let html = '';
     filtered.forEach((submission, index) => {
-        const originalIndex = submissions.findIndex(s => s.id === submission.id);
+        const originalIndex = base.findIndex(s => s.id === submission.id);
         html += createSubmissionHTML(submission, originalIndex);
     });
     
@@ -722,7 +742,7 @@ function clearFilter() {
 
 // 신청 수정
 function editSubmission(index) {
-    const submissions = JSON.parse(localStorage.getItem('cleaningSubmissions') || '[]');
+    const submissions = Array.isArray(window.currentSubmissions) ? window.currentSubmissions : [];
     const submission = submissions[index];
     
     if (!submission) return;
@@ -744,6 +764,7 @@ function editSubmission(index) {
     // 수정 모드 설정
     window.editMode = true;
     window.editIndex = index;
+    window.editTargetId = submission.id;
     
     // 제출 버튼 텍스트 변경
     document.querySelector('button[type="submit"]').textContent = '수정 완료';
@@ -756,16 +777,12 @@ async function deleteSubmission(index) {
     // Sheets 사용 시: id로 삭제
     if (SHEETS_API_URL) {
         try {
-            const submissions = await loadSubmissionsFromDatabase();
-            const target = submissions[index];
+            const target = (Array.isArray(window.currentSubmissions) ? window.currentSubmissions : [])[index];
             if (target && target.id) {
                 await sheetsDeleteSubmission(target.id);
             }
         } catch (e) {
             console.warn('Sheets 삭제 실패, localStorage로 fallback:', e);
-            const submissions = JSON.parse(localStorage.getItem('cleaningSubmissions') || '[]');
-            submissions.splice(index, 1);
-            localStorage.setItem('cleaningSubmissions', JSON.stringify(submissions));
         }
         loadSubmissions();
         return;
@@ -780,7 +797,7 @@ async function deleteSubmission(index) {
 
 // 개별 신청 인쇄
 function printSubmission(index) {
-    const submissions = JSON.parse(localStorage.getItem('cleaningSubmissions') || '[]');
+    const submissions = Array.isArray(window.currentSubmissions) ? window.currentSubmissions : [];
     const submission = submissions[index];
     
     if (!submission) return;
@@ -871,7 +888,7 @@ function printSubmission(index) {
 
 // 전체 요약 인쇄
 function printSummary() {
-    const submissions = JSON.parse(localStorage.getItem('cleaningSubmissions') || '[]');
+    const submissions = Array.isArray(window.currentSubmissions) ? window.currentSubmissions : [];
     const printWindow = window.open('', '_blank');
     
     const ITEM_INFO = {
