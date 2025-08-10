@@ -25,7 +25,8 @@ const ITEM_KEYS = Object.keys(ITEM_INFO);
 
 // Google Sheets Web App URL (Apps Script 배포 URL을 넣으세요)
 // 예: const SHEETS_API_URL = 'https://script.google.com/macros/s/xxxxxxxx/exec';
-const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycby15Wi4bepKRhREU0L1Cjn-6CHRRcF_qUJbnB6C1ZgbQNczM3BdLKesPVy_37IzJqvC-Q/exec';
+// 사용자 제공 URL로 교체
+const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbz2uJ7ydCsQc_hYTM8PwqkDlMkxKDv9xa7L9llac_hllBko-l7ESuTIWZHgt6u_cZ1lsw/exec';
 
 // Sheets API helpers
 async function sheetsCreateSubmission(data) {
@@ -228,32 +229,36 @@ function deleteFromLocalStorage(index) {
 
 // 페이지 로드 시 오늘 날짜를 기본값으로 설정
 document.addEventListener('DOMContentLoaded', function() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('date').value = today;
-    // 초기 화면 상태: 요약/성공/목록/마이/월별 섹션 강제 숨김 보장
-    ['summary','successSection','listPage','myPage','monthlyPage'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.classList.add('hidden');
-            el.setAttribute('aria-hidden','true');
-        }
-    });
-    
-    // 폼 제출 이벤트 리스너 추가
-    document.getElementById('itemForm').addEventListener('submit', handleFormSubmit);
-    
-    // 수량 입력 필드에 이벤트 리스너 추가
-    const quantityInputs = document.querySelectorAll('.quantity-input');
-    quantityInputs.forEach(input => {
-        input.addEventListener('input', validateQuantity);
-        // 모바일에서 숫자 키패드 최적화
-        input.addEventListener('focus', function() {
-            this.select();
-        });
-    });
-    
-    // 모바일 최적화: 터치 이벤트 처리
-    setupMobileOptimizations();
+  const today = new Date().toISOString().split('T')[0];
+  const dateEl = document.getElementById('date');
+  if (dateEl) dateEl.value = today;
+
+  // 첫 화면에서 바로 목록 보기 표시
+  const formContainer = document.querySelector('.container');
+  if (formContainer) formContainer.style.display = 'none';
+  const listPage = document.getElementById('listPage');
+  if (listPage) {
+    listPage.classList.remove('hidden');
+    listPage.classList.add('show');
+    listPage.setAttribute('aria-hidden','false');
+  }
+
+  // 폼 제출 이벤트 리스너
+  const formEl = document.getElementById('itemForm');
+  if (formEl) formEl.addEventListener('submit', handleFormSubmit);
+
+  // 수량 입력 필드 리스너
+  const quantityInputs = document.querySelectorAll('.quantity-input');
+  quantityInputs.forEach(input => {
+    input.addEventListener('input', validateQuantity);
+    input.addEventListener('focus', function() { this.select(); });
+  });
+
+  // 모바일 최적화
+  setupMobileOptimizations();
+
+  // 목록 로드
+  loadSubmissions();
 });
 
 // 모바일 최적화 설정

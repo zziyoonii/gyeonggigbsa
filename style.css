@@ -1,3 +1,11 @@
+/* 목록 보기 가독성 개선 및 한국어 깨짐 방지 */
+.submission-list { white-space: normal; word-break: keep-all; }
+.submission-list .entry { margin: 10px 0 14px; font-size: 18px; line-height: 1.7; letter-spacing: 0.1px; }
+.submission-list .label { display: inline-block; min-width: 72px; font-weight: 700; color: #222; }
+.submission-list .value { font-weight: 600; color: #111; }
+
+/* 목록 카드의 기본 폰트 크기 살짝 키움 */
+.submission-item .submission-info span { font-size: 16px; }
 * {
     margin: 0;
     padding: 0;
