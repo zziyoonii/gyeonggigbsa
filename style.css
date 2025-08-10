@@ -37,6 +37,30 @@ header {
     border-bottom: 3px solid #4CAF50;
 }
 
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+}
+.brand-logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+/* 제목과 보조문구 간격을 타이트하게 조정 */
+.brand h1 {
+    margin: 0 0 6px 0;
+}
+.brand p {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+@media (max-width: 768px) {
+    .brand-logo { height: 36px; }
+}
+
 header h1 {
     font-size: 32px;
     color: #2E7D32;

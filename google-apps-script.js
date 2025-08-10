@@ -274,3 +274,55 @@ function testFunction() {
   console.log('시트 이름:', sheet.getName());
   console.log('테스트 데이터:', testData);
 }
+
+// 관리자 요약 시트 생성/갱신: 한 번 실행하면 '관리요약' 탭이 생깁니다
+function createManagerSummary() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+  var src = getOrCreateSheet(); // '미화품목신청'
+  var sh = ss.getSheetByName('관리요약');
+  if (!sh) sh = ss.insertSheet('관리요약'); else sh.clear();
+
+  // 머리말/월 입력 안내
+  sh.getRange('A1').setValue('관리요약');
+  sh.getRange('B1').setValue('월');
+  sh.getRange('C1').setValue('예: 2025-08');
+  sh.getRange('A1:C1').setFontWeight('bold');
+
+  // 품목 합계 표 헤더
+  sh.getRange('A3').setValue('품목');
+  sh.getRange('B3').setValue('총요청');
+  sh.getRange('C3').setValue('총배정(입력)');
+  sh.getRange('D3').setValue('구매수량(=총요청-총배정)');
+  sh.getRange('A3:D3').setFontWeight('bold').setBackground('#e8f5e8');
+
+  // 품목 목록
+  var items = ['봉투','걸레','락스','세제','휴지','쓰레기봉투','장갑','빗자루'];
+  sh.getRange(4,1,items.length,1).setValues(items.map(function(i){return [i];}));
+
+  // 각 품목별 총요청(FILTER) 수식: 미화품목신청!에서 월(C1) 기준 합계
+  var mapCol = { '봉투':'G','걸레':'H','락스':'I','세제':'J','휴지':'K','쓰레기봉투':'L','장갑':'M','빗자루':'N' };
+  for (var r=0;r<items.length;r++) {
+    var item = items[r];
+    var col = mapCol[item];
+    var row = 4 + r;
+    var formula = '=IF($C$1="","",SUM(FILTER(미화품목신청!'+col+'2:'+col+', 미화품목신청!F2:F=$C$1)))';
+    sh.getRange(row, 2).setFormula(formula);
+    // 구매수량 = 총요청 - 총배정
+    sh.getRange(row, 4).setFormula('=IF(B'+row+'="","",B'+row+'-C'+row+')');
+  }
+
+  // 구분선
+  sh.getRange('A12').setValue('개인별 목록 (월 필터)');
+  sh.getRange('A12').setFontWeight('bold');
+
+  // 개인별 필터 표 헤더
+  var headers = ['신청자','부서','봉투','걸레','락스','세제','휴지','쓰레기봉투','장갑','빗자루','비고'];
+  sh.getRange('A13:K13').setValues([headers]).setFontWeight('bold').setBackground('#f0f0f0');
+  // FILTER로 해당 월 데이터 표시
+  var filterFormula = '=IF($C$1="","",FILTER({미화품목신청!C2:D, 미화품목신청!G2:N, 미화품목신청!O2:O}, 미화품목신청!F2:F=$C$1))';
+  sh.getRange('A14').setFormula(filterFormula);
+
+  // 열 너비/보기 정리
+  sh.autoResizeColumns(1, 11);
+  sh.setFrozenRows(3);
+}

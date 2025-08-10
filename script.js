@@ -7,26 +7,7 @@ const ITEM_INFO = {
     tissue: '휴지',
     trashbag: '쓰레기봉투',
     gloves: '장갑',
-    broom: '빗자루',
-    mop: '대걸레',
-    bucket: '양동이',
-    sponge: '수세미',
-    dishsoap: '주방세제',
-    disinfectant: '소독제',
-    glassclean: '유리세정제',
-    toiletpaper: '화장지',
-    handsoap: '손세정제',
-    towel: '수건',
-    brush: '솔',
-    dustpan: '쓰레받기',
-    vacuum: '진공청소기 필터',
-    airfresh: '방향제',
-    floorclean: '바닥세정제',
-    wipes: '물티슈',
-    mask: '마스크',
-    apron: '앞치마',
-    scraper: '스크래퍼',
-    spray: '스프레이통'
+    broom: '빗자루'
 };
 
 const ITEM_UNITS = {
@@ -37,26 +18,7 @@ const ITEM_UNITS = {
     tissue: '롤',
     trashbag: '개',
     gloves: '켤레',
-    broom: '개',
-    mop: '개',
-    bucket: '개',
-    sponge: '개',
-    dishsoap: '병',
-    disinfectant: '병',
-    glassclean: '병',
-    toiletpaper: '롤',
-    handsoap: '병',
-    towel: '개',
-    brush: '개',
-    dustpan: '개',
-    vacuum: '개',
-    airfresh: '개',
-    floorclean: '병',
-    wipes: '팩',
-    mask: '박스',
-    apron: '개',
-    scraper: '개',
-    spray: '개'
+    broom: '개'
 };
 
 const ITEM_KEYS = Object.keys(ITEM_INFO);

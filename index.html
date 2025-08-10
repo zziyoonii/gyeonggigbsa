@@ -8,13 +8,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="theme-color" content="#4CAF50">
     <title>미화 품목 제출 시스템</title>
+    <link rel="icon" type="image/png" href="/assets/logo.png">
+    <link rel="apple-touch-icon" href="/assets/logo.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>미화 품목 제출 시스템</h1>
-            <p>필요한 품목과 수량을 입력해주세요</p>
+        <header class="brand" role="banner">
+            <img src="/assets/logo.png" alt="GBSA 로고" class="brand-logo">
+            <div>
+                <p>필요한 품목과 수량을 입력해주세요</p>
+            </div>
         </header>
 
         <main>
@@ -85,53 +89,7 @@
                         <span class="unit">개</span>
                     </div>
 
-                    <div class="item-row">
-                        <label for="mop">대걸레:</label>
-                        <input type="number" id="mop" name="mop" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
-                        <span class="unit">개</span>
-                    </div>
-
-                    <div class="item-row">
-                        <label for="bucket">양동이:</label>
-                        <input type="number" id="bucket" name="bucket" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
-                        <span class="unit">개</span>
-                    </div>
-
-                    <div class="item-row">
-                        <label for="sponge">수세미:</label>
-                        <input type="number" id="sponge" name="sponge" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
-                        <span class="unit">개</span>
-                    </div>
-
-                    <div class="item-row">
-                        <label for="dishsoap">주방세제:</label>
-                        <input type="number" id="dishsoap" name="dishsoap" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
-                        <span class="unit">병</span>
-                    </div>
-
-                    <div class="item-row">
-                        <label for="disinfectant">소독제:</label>
-                        <input type="number" id="disinfectant" name="disinfectant" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
-                        <span class="unit">병</span>
-                    </div>
-
-                    <div class="item-row">
-                        <label for="glassclean">유리세정제:</label>
-                        <input type="number" id="glassclean" name="glassclean" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
-                        <span class="unit">병</span>
-                    </div>
-
-                    <div class="item-row">
-                        <label for="toiletpaper">화장지:</label>
-                        <input type="number" id="toiletpaper" name="toiletpaper" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
-                        <span class="unit">롤</span>
-                    </div>
-
-                    <div class="item-row">
-                        <label for="handsoap">손세정제:</label>
-                        <input type="number" id="handsoap" name="handsoap" min="0" value="0" class="quantity-input" inputmode="numeric" pattern="[0-9]*">
-                        <span class="unit">병</span>
-                    </div>
+                    <!-- 불필요한 항목 제거(요청: 빗자루까지만 사용) -->
 
                     <div class="item-row">
                         <label for="towel">수건:</label>
