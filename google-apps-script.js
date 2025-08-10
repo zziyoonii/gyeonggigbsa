@@ -48,6 +48,12 @@ function getOrCreateSheet() {
 // GET: 전체/월별 조회 → { submissions: [...] } 또는 JSONP(callback)
 function doGet(e) {
   try {
+    // 관리요약 탭 원격 생성 훅: /exec?setup=managerSummary
+    if (e && e.parameter && e.parameter.setup === 'managerSummary') {
+      createManagerSummary();
+      return withCors(ContentService.createTextOutput(JSON.stringify({ success: true, setup: 'managerSummary' })));
+    }
+
     const monthFilter = e && e.parameter && e.parameter.month;
     const sheet = getOrCreateSheet();
     const values = sheet.getDataRange().getValues();
@@ -231,24 +237,7 @@ function doDelete(e) {
 }
 
 // 시트 가져오기 또는 생성
-function getOrCreateSheet() {
-  let spreadsheet;
-  
-  try {
-    spreadsheet = SpreadsheetApp.openById(SHEET_ID);
-  } catch (error) {
-    // 시트가 없으면 새로 생성
-    spreadsheet = SpreadsheetApp.create('미화 품목 신청 현황');
-    console.log('새 스프레드시트 생성됨. ID:', spreadsheet.getId());
-  }
-  
-  let sheet = spreadsheet.getSheetByName(SHEET_NAME);
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet(SHEET_NAME);
-  }
-  
-  return sheet;
-}
+// 중복 정의 제거: 상단의 getOrCreateSheet를 사용합니다
 
 // (이전 getData/getMyData 핸들러는 통합되어 doGet에서 처리)
 
