@@ -233,14 +233,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const dateEl = document.getElementById('date');
   if (dateEl) dateEl.value = today;
 
-  // 첫 화면에서 바로 목록 보기 표시
-  const formContainer = document.querySelector('.container');
-  if (formContainer) formContainer.style.display = 'none';
+  // 첫 화면: 폼 표시 유지, 목록 숨김
   const listPage = document.getElementById('listPage');
   if (listPage) {
-    listPage.classList.remove('hidden');
-    listPage.classList.add('show');
-    listPage.setAttribute('aria-hidden','false');
+    listPage.classList.add('hidden');
+    listPage.setAttribute('aria-hidden','true');
   }
 
   // 폼 제출 이벤트 리스너
@@ -256,9 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 모바일 최적화
   setupMobileOptimizations();
-
-  // 목록 로드
-  loadSubmissions();
 });
 
 // 모바일 최적화 설정
