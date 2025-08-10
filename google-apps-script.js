@@ -261,12 +261,28 @@ function testFunction() {
   console.log('테스트 데이터:', testData);
 }
 
+// 내부: 오류 로그 시트에 기록
+function logManagerSummaryError(message) {
+  try {
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var log = ss.getSheetByName('관리요약_오류로그');
+    if (!log) log = ss.insertSheet('관리요약_오류로그');
+    log.appendRow([new Date(), 'createManagerSummary', String(message)]);
+  } catch (e) {
+    // 로깅 중 오류는 무시
+  }
+}
+
 // 관리자 요약 시트 생성/갱신: 한 번 실행하면 '관리요약' 탭이 생깁니다
 function createManagerSummary() {
-  var ss = SpreadsheetApp.openById(SHEET_ID);
-  var src = getOrCreateSheet(); // '미화품목신청'
-  var sh = ss.getSheetByName('관리요약');
-  if (!sh) sh = ss.insertSheet('관리요약'); else sh.clear();
+  try {
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var src = getOrCreateSheet(); // '미화품목신청'
+    var sh = ss.getSheetByName('관리요약');
+    if (sh) {
+      ss.deleteSheet(sh);
+    }
+    sh = ss.insertSheet('관리요약');
 
   // 머리말/월 입력 안내
   sh.getRange('A1').setValue('관리요약');
@@ -285,17 +301,17 @@ function createManagerSummary() {
   var items = ['봉투','걸레','락스','세제','휴지','쓰레기봉투','장갑','빗자루'];
   sh.getRange(4,1,items.length,1).setValues(items.map(function(i){return [i];}));
 
-  // 각 품목별 총요청(FILTER) 수식: 미화품목신청!에서 월(C1) 기준 합계
-  var mapCol = { '봉투':'G','걸레':'H','락스':'I','세제':'J','휴지':'K','쓰레기봉투':'L','장갑':'M','빗자루':'N' };
-  for (var r=0;r<items.length;r++) {
-    var item = items[r];
-    var col = mapCol[item];
-    var row = 4 + r;
-    var formula = '=IF($C$1="","",SUM(FILTER(미화품목신청!'+col+'2:'+col+', 미화품목신청!F2:F=$C$1)))';
-    sh.getRange(row, 2).setFormula(formula);
-    // 구매수량 = 총요청 - 총배정
-    sh.getRange(row, 4).setFormula('=IF(B'+row+'="","",B'+row+'-C'+row+')');
-  }
+    // 각 품목별 총요청 수식: 월(B1) 기준으로 F열 또는 E열(신청일)에서 월 추출 일치 시 합계
+    var mapCol = { '봉투':'G','걸레':'H','락스':'I','세제':'J','휴지':'K','쓰레기봉투':'L','장갑':'M','빗자루':'N' };
+    for (var r=0;r<items.length;r++) {
+      var item = items[r];
+      var col = mapCol[item];
+      var row = 4 + r;
+      var formula = "=IF($B$1=\"\",\"\",IFERROR(SUM(FILTER('미화품목신청'!"+col+"2:"+col+", (('미화품목신청'!F2:F=$B$1) + (LEFT('미화품목신청'!E2:E,7)=$B$1)))),0))";
+      sh.getRange(row, 2).setFormula(formula);
+      // 구매수량 = 총요청 - 총배정
+      sh.getRange(row, 4).setFormula('=IF(B'+row+'="","",B'+row+'-C'+row+')');
+    }
 
   // 구분선
   sh.getRange('A12').setValue('개인별 목록 (월 필터)');
@@ -304,11 +320,16 @@ function createManagerSummary() {
   // 개인별 필터 표 헤더
   var headers = ['신청자','부서','봉투','걸레','락스','세제','휴지','쓰레기봉투','장갑','빗자루','비고'];
   sh.getRange('A13:K13').setValues([headers]).setFontWeight('bold').setBackground('#f0f0f0');
-  // FILTER로 해당 월 데이터 표시
-  var filterFormula = '=IF($C$1="","",FILTER({미화품목신청!C2:D, 미화품목신청!G2:N, 미화품목신청!O2:O}, 미화품목신청!F2:F=$C$1))';
-  sh.getRange('A14').setFormula(filterFormula);
+    // FILTER로 해당 월 데이터 표시 (F열=월 일치 OR E열(신청일)에서 월 추출 일치)
+    var filterFormula = "=IF($B$1=\"\",\"\",IFERROR(FILTER({'미화품목신청'!C2:D, '미화품목신청'!G2:N, '미화품목신청'!O2:O}, (('미화품목신청'!F2:F=$B$1) + (LEFT('미화품목신청'!E2:E,7)=$B$1))),))";
+    sh.getRange('A14').setFormula(filterFormula);
 
-  // 열 너비/보기 정리
-  sh.autoResizeColumns(1, 11);
-  sh.setFrozenRows(3);
+    // 열 너비/보기 정리
+    sh.autoResizeColumns(1, 11);
+    sh.setFrozenRows(3);
+    // 전체 글자 크기 15 적용
+    sh.getDataRange().setFontSize(15);
+  } catch (err) {
+    logManagerSummaryError(err && err.stack ? err.stack : err);
+  }
 }
