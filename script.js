@@ -536,13 +536,23 @@ function resetForm() {
 // 목록 페이지로 이동
 function goToListPage() {
     document.querySelector('.container').style.display = 'none';
-    document.getElementById('listPage').classList.add('show');
+    const listPage = document.getElementById('listPage');
+    if (listPage) {
+        listPage.classList.remove('hidden');
+        listPage.classList.add('show');
+        listPage.setAttribute('aria-hidden', 'false');
+    }
     loadSubmissions();
 }
 
 // 폼 페이지로 이동
 function goToFormPage() {
-    document.getElementById('listPage').classList.remove('show');
+    const listPage = document.getElementById('listPage');
+    if (listPage) {
+        listPage.classList.remove('show');
+        listPage.classList.add('hidden');
+        listPage.setAttribute('aria-hidden', 'true');
+    }
     document.querySelector('.container').style.display = 'block';
     resetForm();
 }

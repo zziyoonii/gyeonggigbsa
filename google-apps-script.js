@@ -17,7 +17,6 @@ const SHEET_NAME = '미화품목신청';
 
 // 공통: CORS
 function withCors(output) {
-  // null-safe
   var out = output || ContentService.createTextOutput('');
   return out.setMimeType(ContentService.MimeType.JSON);
 }
@@ -37,10 +36,8 @@ function getOrCreateSheet() {
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
 
-  // 항상 1행 헤더를 표준 헤더로 강제 설정(기존 한국어 헤더 혼재 문제 방지)
   const headers = getStandardHeaders();
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-  // 남는 이전 헤더 잔여값 제거: 1행의 나머지 셀은 비움
   const lastCol = sheet.getLastColumn();
   if (lastCol > headers.length) {
     sheet.getRange(1, headers.length + 1, 1, lastCol - headers.length).clearContent();
@@ -223,8 +220,8 @@ function doDelete(e) {
     const sheet = getOrCreateSheet();
     const values = sheet.getDataRange().getValues();
     const [header, ...rows] = values;
-    const idIdx = header.indexOf('id');
-    const rowIdx = rows.findIndex(r => String(r[idIdx]) === String(id));
+    const idIdx = header.indexOf('식별자');
+    const rowIdx = rows.findIndex(function(r){ return String(r[idIdx]) === String(id); });
     if (rowIdx < 0) return withCors(ContentService.createTextOutput(JSON.stringify({ success: false, error: 'not found' })));
     sheet.deleteRow(rowIdx + 2);
     return withCors(ContentService.createTextOutput(JSON.stringify({ success: true })));
